@@ -340,6 +340,15 @@ func (s *DNS01Solver) Wait(ctx context.Context, challenge acme.Challenge) error 
 			return fmt.Errorf("checking DNS propagation of %s: %w", dnsName, err)
 		}
 		if ready {
+			// wait up to 30s for DNS records to be deployed globally
+			// see https://community.letsencrypt.org/t/during-secondary-validation-incorrect-txt-record/113643
+			delay := time.Now().Sub(start) - timeout
+			if delay > 0 {
+				if delay > 30 * time.Second {
+					delay = 30 * time.Second
+				}
+				time.Sleep(delay)
+			}
 			return nil
 		}
 	}
